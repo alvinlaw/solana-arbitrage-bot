@@ -62,7 +62,7 @@ fn main() {
     let owner_kp_path = match cluster {
         Cluster::Localnet => "../../mainnet_fork/localnet_owner.key",
         Cluster::Mainnet => {
-            "/Users/edgar/.config/solana/uwuU3qc2RwN6CpzfBAhg6wAxiEx138jy5wB3Xvx18Rw.json"
+            "my-wallet.json"
         }
         _ => panic!("shouldnt get here"),
     };
@@ -70,7 +70,8 @@ fn main() {
     // ** setup RPC connection
     let connection_url = match cluster {
         Cluster::Mainnet => {
-            "https://mainnet.rpc.jito.wtf/?access-token=746bee55-1b6f-4130-8347-5e1ea373333f"
+            // "https://mainnet.rpc.jito.wtf/?access-token=746bee55-1b6f-4130-8347-5e1ea373333f"
+            "https://api.mainnet-beta.solana.com"
         }
         _ => cluster.url(),
     };
@@ -207,7 +208,8 @@ fn main() {
 
     info!("update accounts is {:?}", update_accounts.len());
     // slide it out here
-    println!("accounts: {:#?}", update_accounts.clone());
+    // println!("accounts: {:#?}", update_accounts.clone());
+    let _update_accounts = update_accounts.clone();
     let init_token_acc = update_accounts.pop().unwrap().unwrap();
     let init_token_balance = unpack_token_account(&init_token_acc.data).amount as u128;
     info!(
@@ -221,13 +223,13 @@ fn main() {
     let mut pool_count = 0;
     let mut account_ptr = 0;
 
-    for pool in pools.into_iter() {
+    for mut pool in pools.into_iter() {
         // update pool
         let length = update_pks_lengths[pool_count];
-        let _account_slice = &update_accounts[account_ptr..account_ptr + length].to_vec();
+        let _account_slice = &_update_accounts[account_ptr..account_ptr + length].to_vec();
         account_ptr += length;
 
-        // pool.set_update_accounts(*account_slice);
+        pool.set_update_accounts(_account_slice.to_vec(), cluster.clone());
 
         // add pool to graph
         let idxs = &all_mint_idxs[pool_count * 2..(pool_count + 1) * 2].to_vec();

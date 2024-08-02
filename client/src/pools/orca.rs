@@ -23,6 +23,7 @@ use crate::pool_utils::{
     fees::Fees,
 };
 use crate::constants::*;
+use log::{debug, info, warn};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -96,6 +97,7 @@ impl PoolOperations for OrcaPool {
         mint_out: &Pubkey,
     ) -> u128 {
         
+        // info!("{:?}", self.pool_amounts);
         let pool_src_amount = self.pool_amounts.get(&mint_in.to_string()).unwrap();
         let pool_dst_amount = self.pool_amounts.get(&mint_out.to_string()).unwrap();
 

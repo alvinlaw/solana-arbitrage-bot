@@ -46,8 +46,8 @@ impl Stable {
         let x = xp[0] + dx;
         let leverage = compute_a(self.amp).unwrap();
         let d = compute_d(leverage, xp[0], xp[1]).unwrap();
-        let y = compute_new_destination_amount(leverage, x, d).unwrap();
-        let dy = xp[1] - y;
+        let y = compute_new_destination_amount(leverage, x, d);
+        let dy = xp[1] - y.unwrap();
         let out_amount = dy.checked_div(percision_multipliers[1] as u128).unwrap();
 
         // reduce fees at the end
@@ -174,13 +174,27 @@ pub fn compute_new_destination_amount(
 
     // Solve for y by approximating: y**2 + b*y = c
     let mut y = d_val;
-    for _ in 0..ITERATIONS {
-        let (y_new, _) = (checked_u8_power(&y, 2)?.checked_add(c)?)
-            .checked_ceil_div(checked_u8_mul(&y, 2)?.checked_add(b)?.checked_sub(d_val)?)?;
-        if y_new == y {
-            break;
+    for i in 0..ITERATIONS {
+        let power_result = checked_u8_power(&y, 2);
+        let add_result = power_result?.checked_add(c);
+        
+        let mul_result = checked_u8_mul(&y, 2);
+        let add_b_result = mul_result?.checked_add(b);
+        let sub_result = add_b_result?.checked_sub(d_val);
+        
+        if add_result? > sub_result? {
+            let div_result = add_result?.checked_ceil_div(sub_result?);
+            
+            let (y_new, _) = div_result?;
+            
+            if y_new == y {
+                break;
+            } else {
+                y = y_new;
+            }
         } else {
-            y = y_new;
+            println!("Sub result is greater than or equal to add result, skipping division");
+            break;
         }
     }
     u128::try_from(y).ok()
